@@ -1,5 +1,7 @@
+import { parseUserMessage, UserChatMessage } from "./lib.ts";
+
 const ws = new WebSocket("ws://irc-ws.chat.twitch.tv:80");
-const channel = "#emceemc2";
+const channel = "#" + Deno.args[0].toLowerCase();
 
 main();
 function main() {
@@ -8,6 +10,7 @@ function main() {
   ws.onerror = (...args: unknown[]) => {
     console.error("WebSocket error observed:", args);
   };
+
   ws.onmessage = (...args: any[]) => {
     const data = args[0].data;
     const isUserMessage = data.split(" ")[1] === "PRIVMSG";
@@ -19,6 +22,7 @@ function main() {
       handleUserMessage(message);
     } else console.log(data);
   };
+
   ws.onopen = () => {
     //ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
     ws.send(`PASS oauth:${OAUTH_PASS}`);
@@ -42,54 +46,3 @@ function handleUserMessage(message: UserChatMessage) {
 function sendUserMessage(message: string, channel: string) {
   ws.send(`PRIVMSG ${channel} :${message}`);
 }
-
-/////// tests
-
-import { assertEquals } from "https://deno.land/std@0.182.0/testing/asserts.ts";
-
-interface UserChatMessage {
-  user: string;
-  text: string;
-}
-
-function parseUserMessage(message: string): UserChatMessage {
-  // :strager!strager@strager.tmi.twitch.tv PRIVMSG #emceemc2 :@emceeMC2 This isn't TDD!
-  const user = message.split("!")[0].slice(1, message.length); // strager
-  // the first char is always a `:`, so the second `:` is always the beginning of the message
-  const beginningOfMessage = message.indexOf(":", 1) + 1;
-  const text = message.slice(beginningOfMessage, message.length);
-
-  return {
-    user: user,
-    text: text,
-  };
-}
-
-Deno.test("parses message", () => {
-  {
-    const message =
-      ":strager!strager@strager.tmi.twitch.tv PRIVMSG #emceemc2 :@emceeMC2 This isn't TDD!";
-    const parsed: UserChatMessage = parseUserMessage(message);
-
-    assertEquals(parsed.user, "strager");
-    assertEquals(parsed.text, "@emceeMC2 This isn't TDD!");
-  }
-
-  {
-    const message =
-      ":emptygrocerybag!emptygrocerybag@emptygrocerybag.tmi.twitch.tv PRIVMSG #emceemc2 :I win";
-    const parsed: UserChatMessage = parseUserMessage(message);
-
-    assertEquals(parsed.user, "emptygrocerybag");
-    assertEquals(parsed.text, "I win");
-  }
-
-  {
-    const message =
-      ":emceemc2!emceemc2@emceemc2.tmi.twitch.tv PRIVMSG #emceemc2 :help: me";
-    const parsed: UserChatMessage = parseUserMessage(message);
-
-    assertEquals(parsed.user, "emceemc2");
-    assertEquals(parsed.text, "help: me");
-  }
-});
