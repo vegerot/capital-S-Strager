@@ -2,43 +2,52 @@ import { parseUserMessage, UserChatMessage } from "./lib.ts";
 
 const ws = new WebSocket("ws://irc-ws.chat.twitch.tv:80");
 const channel = "#" + Deno.args[0].toLowerCase();
+const OAUTH_PASS = Deno.env.get("OAUTH_PASS");
 
 main();
-function main() {
-  const OAUTH_PASS = Deno.env.get("OAUTH_PASS");
 
+function main() {
   ws.onerror = (...args: unknown[]) => {
     console.error("WebSocket error observed:", args);
   };
 
   ws.onmessage = (...args: any[]) => {
     const data = args[0].data;
-    const isUserMessage = data.split(" ")[1] === "PRIVMSG";
-    if (data.startsWith("PING")) {
-      handlePing(ws);
-    } else if (isUserMessage) {
-      // I don't think "!" is a legal username or email, so this is a good way to check if it's a user message
-      const message = parseUserMessage(data);
-      handleUserMessage(message);
-    } else console.log(data);
+    /*console.log("------message start-----");
+    console.log(data);
+    console.log("------message end-----");*/
+    const message = parseUserMessage(data);
+    switch (message.type) {
+      case "PING":
+        handlePing(message);
+        break;
+      case "PRIVMSG":
+        handleUserMessage(message);
+        break;
+      case "UNKNOWN":
+        console.warn("UNKNOWN message type:", message.type);
+        console.warn(message);
+        break;
+      default:
+        throw new Error("wat?");
+    }
   };
 
   ws.onopen = () => {
-    //ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
+    ws.send("CAP REQ :twitch.tv/tags");
     ws.send(`PASS oauth:${OAUTH_PASS}`);
     ws.send("NICK emceeMC2");
     //ws.send("USER emceemc2 8 * :emceemc2");
-    ws.send("JOIN :#emceemc2");
-    ws.send("PRIVMSG #emceemc2 : help me");
+    ws.send(`JOIN :${channel}`);
   };
 }
 
-function handlePing(ws: WebSocket) {
-  ws.send("PONG :tmi.twitch.tv");
+function handlePing(message: UserChatMessage) {
+  ws.send(`PONG :${message.text}`);
 }
 
 function handleUserMessage(message: UserChatMessage) {
-  if (message.text.includes("Strager")) {
+  if (message.text?.includes("Strager")) {
     sendUserMessage("who?", channel);
   }
 }
