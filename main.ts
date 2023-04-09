@@ -25,8 +25,8 @@ function main() {
         handleUserMessage(message);
         break;
       case "UNKNOWN":
-        console.warn("UNKNOWN message type:", message.type);
-        console.warn(message);
+        //console.warn("UNKNOWN message type:", message.type);
+        //console.warn(message);
         break;
       default:
         throw new Error("wat?");
@@ -47,11 +47,20 @@ function handlePing(message: UserChatMessage) {
 }
 
 function handleUserMessage(message: UserChatMessage) {
-  if (message.text?.includes("Strager")) {
-    sendUserMessage("who?", channel);
+  const text = message.text;
+  if (!text) return;
+  const startOfStragerReference = text.toLowerCase().indexOf("strager");
+  if (text[startOfStragerReference] === "S") {
+    replyToMessage(message, "who?", channel);
   }
 }
 
-function sendUserMessage(message: string, channel: string) {
-  ws.send(`PRIVMSG ${channel} :${message}`);
+function replyToMessage(
+  parentMessage: UserChatMessage,
+  message: string,
+  channel: string,
+) {
+  ws.send(
+    `@reply-parent-msg-id=${parentMessage.id} PRIVMSG ${channel} :${message}`,
+  );
 }
