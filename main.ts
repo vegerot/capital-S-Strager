@@ -1,4 +1,10 @@
-import { parseUserMessage, UserChatMessage } from "./lib.ts";
+#!/usr/bin/env -S deno run
+
+import {
+  issTragerMispelled,
+  parseUserMessage,
+  UserChatMessage,
+} from "./lib.ts";
 
 const ws = new WebSocket("ws://irc-ws.chat.twitch.tv:80");
 const channel = "#" + Deno.args[0].toLowerCase();
@@ -39,6 +45,7 @@ function main() {
     ws.send("NICK emceeMC2");
     //ws.send("USER emceemc2 8 * :emceemc2");
     ws.send(`JOIN :${channel}`);
+    ws.send(`PRIVMSG ${channel} : HeyGuys`);
   };
 }
 
@@ -49,8 +56,8 @@ function handlePing(message: UserChatMessage) {
 function handleUserMessage(message: UserChatMessage) {
   const text = message.text;
   if (!text) return;
-  const startOfStragerReference = text.toLowerCase().indexOf("strager");
-  if (text[startOfStragerReference] === "S") {
+  if (issTragerMispelled(text)) {
+    console.log(message);
     replyToMessage(message, "who?", channel);
   }
 }

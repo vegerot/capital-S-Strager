@@ -1,5 +1,9 @@
 import { assertEquals } from "https://deno.land/std@0.182.0/testing/asserts.ts";
-import { parseUserMessage, UserChatMessage } from "./lib.ts";
+import {
+  issTragerMispelled,
+  parseUserMessage,
+  UserChatMessage,
+} from "./lib.ts";
 
 Deno.test("parses messages", () => {
   {
@@ -59,4 +63,13 @@ Deno.test("parses message with optional part", () => {
     assertEquals(parsed.text, "bleedPurple");
     assertEquals(parsed.type, "PRIVMSG");
   }
+});
+
+Deno.test("finds mispelled stragers", () => {
+  assertEquals(issTragerMispelled("strager"), false);
+  assertEquals(issTragerMispelled("Strager"), true);
+  assertEquals(issTragerMispelled("StRaGeR"), true);
+  assertEquals(issTragerMispelled("sTRAGER"), false);
+  assertEquals(issTragerMispelled("STRAGER"), false);
+  assertEquals(issTragerMispelled("what are you talking about?"), false);
 });

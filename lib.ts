@@ -52,3 +52,16 @@ export function parseUserMessage(message: string): UserChatMessage {
     text: text || null,
   };
 }
+
+export function issTragerMispelled(msg: string): boolean {
+  const strager = "strager";
+  const startOfStragerReference = msg.toLowerCase().indexOf(strager);
+  const stragerWithCapitalS = msg[startOfStragerReference] === "S";
+  const isWholeNameCaps =
+    msg.slice(
+      startOfStragerReference,
+      startOfStragerReference + strager.length,
+    ) === strager.toUpperCase();
+
+  return stragerWithCapitalS && !isWholeNameCaps;
+}
