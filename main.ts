@@ -45,7 +45,7 @@ function main() {
     ws.send("NICK emceeMC2");
     //ws.send("USER emceemc2 8 * :emceemc2");
     ws.send(`JOIN :${channel}`);
-    ws.send(`PRIVMSG ${channel} : HeyGuys`);
+    ws.send(`PRIVMSG ${channel} : MrDestructoid`);
   };
 }
 
